@@ -3,6 +3,7 @@ import aiohttp
 from dotenv import load_dotenv
 import psycopg
 import os
+import pandas as pd
 
 load_dotenv()
 
@@ -15,18 +16,21 @@ async def extract_data(url: str) -> list[dict]:
             return await response.json()
 
 def transform_data(raw_data: list[dict]) -> list[dict]:
-    cleaned = []
-    for item in raw_data:
-        if not item.get('title'):
-            continue
-        cleaned.append({
-            "post_id": item['id'],
-            'title': item['title'].strip().capitalize(),
-            'user_id': item['userId']
-        })
-    return cleaned
+    df = pd.DataFrame(raw_data)
+    
+    df = df.dropna(subset=['title'])
+    
+    df['title'] = df['title'].str.strip().str.capitalize()
+    
+    df = df.rename(columns={'id': 'post_id', 'userId': 'user_id'})
+    
+    df = df[['post_id', 'title', 'user_id']]
+    
+    records = list(df.itertuples(index=False, name=None))
+    
+    return records
 
-async def load_to_db(data: list[dict]):
+async def load_to_db(records: list[dict]):
     conn_info = f"dbname={os.getenv('DB_NAME')} user={os.getenv('DB_USER')} password={os.getenv('DB_PASSWORD')} host={os.getenv('DB_HOST')} port={os.getenv('DB_PORT')}"
     async with await psycopg.AsyncConnection.connect(conn_info) as conn:
         
@@ -39,7 +43,6 @@ async def load_to_db(data: list[dict]):
                 );
             """)
 
-            records = [(item['post_id'], item['title'],item['user_id']) for item in data]
             
             await cur.executemany("""
                 INSERT INTO etl_posts (post_id, title, user_id) 
