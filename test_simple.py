@@ -5,6 +5,7 @@ import psycopg
 import os
 import pandas as pd
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import sys
 
 load_dotenv()
 
@@ -103,5 +104,6 @@ async def main():
 
 if __name__ == "__main__":
     # все тот же фикс от калловой винды cнизу
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    asyncio.run(main())
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.run(main())

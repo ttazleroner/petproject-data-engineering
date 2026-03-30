@@ -13,6 +13,14 @@ services:
       - "5432:5432"
     volumes:
       - etl_pg_data:/var/lib/postgresql/data
+  etl_worker:
+    build: .
+    container_name: etl_python_worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - postgres
 
 volumes:
   etl_pg_data:
