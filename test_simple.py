@@ -53,6 +53,28 @@ async def load_to_db(records: list[dict]):
             
             await conn.commit()
 
+async def analitics():
+    conn_info = f"dbname={os.getenv('DB_NAME')} user={os.getenv('DB_USER')} password={os.getenv('DB_PASSWORD')} host={os.getenv('DB_HOST')} port={os.getenv('DB_PORT')}"
+    async with await psycopg.AsyncConnection.connect(conn_info) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS user_post_stats (  
+                    user_id INTEGER PRIMARY KEY,  
+                    post_count INTEGER  
+                );  
+            """)
+            
+            await cur.execute("""
+                INSERT INTO user_post_stats (user_id, post_count)
+                SELECT user_id, COUNT(post_id) 
+                FROM etl_posts 
+                GROUP BY user_id
+                ON CONFLICT (user_id) DO UPDATE 
+                SET post_count = EXCLUDED.post_count;
+            """)
+            await conn.commit()
+            print('база аналитиков обновлена')
+            
 async def aps_time():
     url = "https://jsonplaceholder.typicode.com/posts"
     print('начинаю ETL процесс.')
@@ -61,6 +83,7 @@ async def aps_time():
         clean = transform_data(raw_data)
         await load_to_db(clean)
         print('батч загружен в бд')
+        await analitics()
     else:
         print('НЕТУ ДАННЫХ ДЛЯ ОБРАБОТКИ.')
 
