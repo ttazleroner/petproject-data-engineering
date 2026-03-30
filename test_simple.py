@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import psycopg
 import os
 import pandas as pd
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
@@ -51,16 +52,32 @@ async def load_to_db(records: list[dict]):
             """, records)
             
             await conn.commit()
-            
-async def main():
+
+async def aps_time():
     url = "https://jsonplaceholder.typicode.com/posts"
     print('начинаю ETL процесс.')
     raw_data = await extract_data(url)
     if raw_data:
         clean = transform_data(raw_data)
         await load_to_db(clean)
+        print('батч загружен в бд')
     else:
         print('НЕТУ ДАННЫХ ДЛЯ ОБРАБОТКИ.')
+
+
+async def main():
+    
+    scheduler = AsyncIOScheduler()
+    
+    scheduler.add_job(aps_time, 'interval', seconds=10)
+    
+    scheduler.start()
+    print('оркестратор запущен')
+    try:
+        await asyncio.Event().wait()
+    except KeyboardInterrupt:
+        print(' оркестратор стопнут 3')
+
 if __name__ == "__main__":
     # все тот же фикс от калловой винды cнизу
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
