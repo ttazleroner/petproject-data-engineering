@@ -53,7 +53,7 @@ async def load_to_db(records: list[dict]):
             
             await conn.commit()
 
-async def analitics():
+async def analytics():
     conn_info = f"dbname={os.getenv('DB_NAME')} user={os.getenv('DB_USER')} password={os.getenv('DB_PASSWORD')} host={os.getenv('DB_HOST')} port={os.getenv('DB_PORT')}"
     async with await psycopg.AsyncConnection.connect(conn_info) as conn:
         async with conn.cursor() as cur:
@@ -83,7 +83,7 @@ async def aps_time():
         clean = transform_data(raw_data)
         await load_to_db(clean)
         print('батч загружен в бд')
-        await analitics()
+        await analytics()
     else:
         print('НЕТУ ДАННЫХ ДЛЯ ОБРАБОТКИ.')
 
