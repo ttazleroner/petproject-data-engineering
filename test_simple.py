@@ -10,12 +10,14 @@ import sys
 load_dotenv()
 
 async def extract_data(url: str) -> list[dict]:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status != 200:
-                print("Траблы extract: {response.status}")
-                return []
-            return await response.json()
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response.raise_for_status()
+                return await response.json()
+    except aiohttp.ClientError as e:
+        print('сетевая ошибка при запуске')
+        return None
 
 def transform_data(raw_data: list[dict]) -> list[dict]:
     df = pd.DataFrame(raw_data)
@@ -93,7 +95,7 @@ async def main():
     
     scheduler = AsyncIOScheduler()
     
-    scheduler.add_job(aps_time, 'interval', seconds=25)
+    scheduler.add_job(aps_time, 'interval', seconds=25, misfire_grace_time=10)
     
     scheduler.start()
     print('оркестратор запущен')
