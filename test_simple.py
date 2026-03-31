@@ -91,16 +91,27 @@ async def analytics():
             """)
             await conn.commit()
             print('база аналитиков обновлена')
-            
+
+async def cons_worker():
+    print('ЖДУ ДАННЫЕ ИЗ ОЧЕРЕДИ')
+    while True:
+        result = await redis_client.brpop('truba_ebat', timeout=0) #таймаут для вечного ожидания
+        if result:
+            truba_name, message_ot_trubi = result
+            data = json.load(message_ot_trubi)
+            print('ДОСТАЛ БАТЧ, НАЧИНАЮ ОБРАБОТКУ')
+            clean = transform_data(data)
+            await load_to_db(clean)
+            print('БАТЧ УЖЕ В БД')
+            await analytics()
+
 async def aps_time():
     url = "https://jsonplaceholder.typicode.com/posts"
     print('начинаю ETL процесс.')
     raw_data = await extract_data(url)
     if raw_data:
-        clean = transform_data(raw_data)
-        await load_to_db(clean)
-        print('батч загружен в бд')
-        await analytics()
+        await redis_client.lpush('truba_ebat', json.dumps(raw_data))
+        print('БАТЧ В ОБРАБОТКЕ')
     else:
         print('НЕТУ ДАННЫХ ДЛЯ ОБРАБОТКИ.')
 
@@ -112,6 +123,9 @@ async def main():
     scheduler.add_job(aps_time, 'interval', seconds=25, misfire_grace_time=10)
     
     scheduler.start()
+    
+    asyncio.create_task(cons_worker())
+    
     print('оркестратор запущен')
     try:
         while True:
