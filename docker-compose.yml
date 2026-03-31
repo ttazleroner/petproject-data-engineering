@@ -20,5 +20,22 @@ services:
     depends_on:
       - postgres
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: first_redis
+    env_file:
+      - .env
+    volumes:
+      - ./.redis_data:/data
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT}:6379"
+    command: [ "redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "PING" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 volumes:
   etl_pg_data:

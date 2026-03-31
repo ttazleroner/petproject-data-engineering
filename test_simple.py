@@ -6,8 +6,22 @@ import os
 import pandas as pd
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import sys
+import redis.asyncio as redis
+import json
 
 load_dotenv()
+
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
+REDIS_PORT = os.getenv('REDIS_PORT', 6379)
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+
+# этот блок мог бы спокойно вынести в отдельный файл, позже эти займусь
+redis_client = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    password=REDIS_PASSWORD,
+    decode_responses=True
+)
 
 async def extract_data(url: str) -> list[dict]:
     try:
@@ -101,7 +115,7 @@ async def main():
     print('оркестратор запущен')
     try:
         while True:
-            await asyncio.sleep(3600)  # Спим час, просыпаемся, спим дальше
+            await asyncio.sleep(3600)
     except (KeyboardInterrupt, SystemExit):
         pass
 
