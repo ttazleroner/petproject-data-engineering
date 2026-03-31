@@ -93,17 +93,18 @@ async def main():
     
     scheduler = AsyncIOScheduler()
     
-    scheduler.add_job(aps_time, 'interval', seconds=10)
+    scheduler.add_job(aps_time, 'interval', seconds=25)
     
     scheduler.start()
     print('оркестратор запущен')
     try:
-        await asyncio.Event().wait()
-    except KeyboardInterrupt:
-        print(' оркестратор стопнут 3')
+        while True:
+            await asyncio.sleep(3600)  # Спим час, просыпаемся, спим дальше
+    except (KeyboardInterrupt, SystemExit):
+        pass
 
 if __name__ == "__main__":
     # все тот же фикс от калловой винды cнизу
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        asyncio.run(main())
+    asyncio.run(main())
