@@ -98,7 +98,7 @@ async def cons_worker():
         result = await redis_client.brpop('truba_ebat', timeout=0) #таймаут для вечного ожидания
         if result:
             truba_name, message_ot_trubi = result
-            data = json.load(message_ot_trubi)
+            data = json.loads(message_ot_trubi)
             print('ДОСТАЛ БАТЧ, НАЧИНАЮ ОБРАБОТКУ')
             clean = transform_data(data)
             await load_to_db(clean)
