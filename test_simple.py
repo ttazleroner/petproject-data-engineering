@@ -8,6 +8,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import sys
 import redis.asyncio as redis
 import json
+import aioboto3 
+from datetime import datetime
 
 load_dotenv()
 
@@ -110,11 +112,27 @@ async def aps_time():
     print('начинаю ETL процесс.')
     raw_data = await extract_data(url)
     if raw_data:
+        await bucket_minio(raw_data)
         await redis_client.lpush('truba_ebat', json.dumps(raw_data))
         print('БАТЧ В ОБРАБОТКЕ')
     else:
         print('НЕТУ ДАННЫХ ДЛЯ ОБРАБОТКИ.')
 
+async def bucket_minio(raw_data):
+    
+    endpoint = "http://minio:9000"
+    minio_key = os.getenv("MINIO_USER")
+    minio_secret_key = os.getenv("MINIO_PASSWORD")
+    
+    file_name = f"raw_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    session = aioboto3.Session()
+    async with session.client('s3', endpoint_url=endpoint, aws_access_key_id=minio_key, aws_secret_access_key=minio_secret_key, region_name='us-east-1') as client:
+        await client.put_object(
+            bucket= 'raw-data',
+            key=file_name,
+            body = json.dumps(raw_data)
+        )
+        print('СЫРОЙ БЕКАП СОХРАНЕН {file_name}')
 
 async def main():
     
