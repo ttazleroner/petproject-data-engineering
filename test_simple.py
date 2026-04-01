@@ -128,11 +128,11 @@ async def bucket_minio(raw_data):
     session = aioboto3.Session()
     async with session.client('s3', endpoint_url=endpoint, aws_access_key_id=minio_key, aws_secret_access_key=minio_secret_key, region_name='us-east-1') as client:
         await client.put_object(
-            bucket= 'raw-data',
-            key=file_name,
-            body = json.dumps(raw_data)
+            Bucket='raw-data',
+            Key=file_name,
+            Body=json.dumps(raw_data)
         )
-        print('СЫРОЙ БЕКАП СОХРАНЕН {file_name}')
+        print(f'СЫРОЙ БЕКАП СОХРАНЕН {file_name}')
 
 async def main():
     
