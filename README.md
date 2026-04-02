@@ -26,4 +26,5 @@ data lake: сразу делает бэкап сырого файла в minIO (
 
 админка minIO будет доступна на http://localhost:9001, а логи воркера можно посмотреть через docker compose logs -f etl_worker.
 
-<img width="250" height="280" alt="image" src="https://github.com/user-attachments/assets/7b45f93e-1139-4093-a2e8-5602ff4b498c" />
+![1000084566](https://github.com/user-attachments/assets/5ca5942d-4a5c-46f9-b971-4a6a616f2b92)
+
